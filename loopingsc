@@ -1,0 +1,301 @@
+-- ✅ Full Compact Mobile-Friendly Marker Teleport Panel with Draggable Reopen Icon
+
+-- Services
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local guiParent = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MarkerTeleportUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = guiParent
+
+-- Main Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 360, 0, 380)
+frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = screenGui
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -30, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+title.Text = "Marker Teleport Panel"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = frame
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -30, 0, 0)
+closeBtn.Text = "X"
+closeBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+closeBtn.Parent = frame
+
+-- Floating Reopen Button (Draggable)
+local reopenBtn = Instance.new("TextButton")
+reopenBtn.Size = UDim2.new(0, 40, 0, 40)
+reopenBtn.Position = UDim2.new(0.9, 0, 0.8, 0)
+reopenBtn.Text = "☰"
+reopenBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+reopenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+reopenBtn.Font = Enum.Font.SourceSansBold
+reopenBtn.TextSize = 24
+reopenBtn.Parent = screenGui
+reopenBtn.Visible = false
+reopenBtn.AutoButtonColor = true
+
+-- Dragging logic for floating icon
+local dragging = false
+local dragInput, mousePos, framePos
+
+reopenBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = reopenBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+reopenBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        reopenBtn.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X,
+                                       framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
+
+reopenBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    reopenBtn.Visible = false
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    reopenBtn.Visible = true
+end)
+
+-- Content Holder
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -10, 1, -40)
+contentFrame.Position = UDim2.new(0, 5, 0, 35)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = frame
+
+-- Variables
+local markers = {}
+local delayTime = 2
+local loopActive = false
+local currentLoopIndex = 1
+
+-- Copy Coords Button
+local copyBtn = Instance.new("TextButton")
+copyBtn.Size = UDim2.new(0.44, -5, 0, 35)
+copyBtn.Position = UDim2.new(0, 0, 0, 0)
+copyBtn.Text = "Copy Coords"
+copyBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
+copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+copyBtn.Parent = contentFrame
+copyBtn.Font = Enum.Font.SourceSansBold
+copyBtn.TextSize = 14
+
+copyBtn.MouseButton1Click:Connect(function()
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local pos = hrp.Position
+        local posStr = string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z)
+        if setclipboard then
+            setclipboard(posStr)
+        elseif toclipboard then
+            toclipboard(posStr)
+        end
+    end
+end)
+
+-- Paste Box
+local pasteBox = Instance.new("TextBox")
+pasteBox.Size = UDim2.new(0.44, -5, 0, 35)
+pasteBox.Position = UDim2.new(0.56, 0, 0, 0)
+pasteBox.PlaceholderText = "Paste coords (X,Y,Z)"
+pasteBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+pasteBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+pasteBox.ClearTextOnFocus = false
+pasteBox.Parent = contentFrame
+pasteBox.Font = Enum.Font.SourceSans
+pasteBox.TextSize = 14
+
+-- Teleport Slot Button
+local teleportBtn = Instance.new("TextButton")
+teleportBtn.Size = UDim2.new(0.9, 0, 0, 35)
+teleportBtn.Position = UDim2.new(0.05, 0, 0.12, 0)
+teleportBtn.Text = "Teleport Slot"
+teleportBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
+teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportBtn.Parent = contentFrame
+teleportBtn.Font = Enum.Font.SourceSansBold
+teleportBtn.TextSize = 16
+
+-- Tiny Slot Popup
+local slotPopup = Instance.new("Frame")
+slotPopup.Size = UDim2.new(0.9, 0, 0, 130)
+slotPopup.Position = UDim2.new(0.05, 0, 0.20, 0)
+slotPopup.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+slotPopup.Visible = false
+slotPopup.Parent = frame
+
+local popupTitle = Instance.new("TextLabel")
+popupTitle.Size = UDim2.new(1, 0, 0, 25)
+popupTitle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+popupTitle.Text = "Choose Slot"
+popupTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+popupTitle.Font = Enum.Font.SourceSansBold
+popupTitle.TextSize = 14
+popupTitle.Parent = slotPopup
+
+for i = 1, 5 do
+    local sbtn = Instance.new("TextButton")
+    sbtn.Size = UDim2.new(0.9, 0, 0, 20)
+    sbtn.Position = UDim2.new(0.05, 0, 0, 25 + (i-1)*22)
+    sbtn.Text = "Slot " .. i
+    sbtn.BackgroundColor3 = Color3.fromRGB(70, 70, 100)
+    sbtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sbtn.Font = Enum.Font.SourceSans
+    sbtn.TextSize = 14
+    sbtn.Parent = slotPopup
+
+    sbtn.MouseButton1Click:Connect(function()
+        if markers[i] then
+            local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = markers[i]
+            end
+        elseif pasteBox.Text and pasteBox.Text ~= "" then
+            local x, y, z = pasteBox.Text:match("([^,]+),%s*([^,]+),%s*([^,]+)")
+            if x and y and z then
+                local pos = Vector3.new(tonumber(x), tonumber(y), tonumber(z))
+                markers[i] = CFrame.new(pos)
+            end
+        end
+        slotPopup.Visible = false
+    end)
+end
+
+teleportBtn.MouseButton1Click:Connect(function()
+    slotPopup.Visible = not slotPopup.Visible
+end)
+
+-- Delay Label and Controls
+local delayLabel = Instance.new("TextLabel")
+delayLabel.Size = UDim2.new(0.5, 0, 0, 25)
+delayLabel.Position = UDim2.new(0, 0, 0.55, 0)
+delayLabel.Text = "Delay: 2s"
+delayLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+delayLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+delayLabel.Font = Enum.Font.SourceSansBold
+delayLabel.TextSize = 14
+delayLabel.Parent = contentFrame
+
+local plusBtn = Instance.new("TextButton")
+plusBtn.Size = UDim2.new(0.2, -5, 0, 25)
+plusBtn.Position = UDim2.new(0.5, 5, 0.55, 0)
+plusBtn.Text = "+"
+plusBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
+plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+plusBtn.Font = Enum.Font.SourceSans
+plusBtn.TextSize = 14
+plusBtn.Parent = contentFrame
+
+local minusBtn = Instance.new("TextButton")
+minusBtn.Size = UDim2.new(0.2, -5, 0, 25)
+minusBtn.Position = UDim2.new(0.7, 5, 0.55, 0)
+minusBtn.Text = "-"
+minusBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 80)
+minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minusBtn.Font = Enum.Font.SourceSans
+minusBtn.TextSize = 14
+minusBtn.Parent = contentFrame
+
+plusBtn.MouseButton1Click:Connect(function()
+    delayTime = delayTime + 1
+    delayLabel.Text = "Delay: " .. delayTime .. "s"
+end)
+minusBtn.MouseButton1Click:Connect(function()
+    if delayTime > 1 then
+        delayTime = delayTime - 1
+        delayLabel.Text = "Delay: " .. delayTime .. "s"
+    end
+end)
+
+-- Loop Button
+local loopBtn = Instance.new("TextButton")
+loopBtn.Size = UDim2.new(0.44, -5, 0, 30)
+loopBtn.Position = UDim2.new(0, 0, 0.65, 0)
+loopBtn.Text = "Start Loop"
+loopBtn.BackgroundColor3 = Color3.fromRGB(80, 120, 80)
+loopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+loopBtn.Font = Enum.Font.SourceSansBold
+loopBtn.TextSize = 14
+loopBtn.Parent = contentFrame
+
+loopBtn.MouseButton1Click:Connect(function()
+    loopActive = not loopActive
+    loopBtn.Text = loopActive and "Stop Loop" or "Start Loop"
+    if loopActive then
+        task.spawn(function()
+            while loopActive do
+                for i = 1,5 do
+                    if markers[i] then
+                        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.CFrame = markers[i]
+                        end
+                    end
+                    task.wait(delayTime)
+                    if not loopActive then break end
+                end
+            end
+        end)
+    end
+end)
+
+-- Reset Button
+local resetBtn = Instance.new("TextButton")
+resetBtn.Size = UDim2.new(0.44, -5, 0, 30)
+resetBtn.Position = UDim2.new(0.56, 0, 0.65, 0)
+resetBtn.Text = "Reset"
+resetBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 80)
+resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+resetBtn.Font = Enum.Font.SourceSansBold
+resetBtn.TextSize = 14
+resetBtn.Parent = contentFrame
+
+resetBtn.MouseButton1Click:Connect(function()
+    markers = {}
+end)
+
+print("✅ Full Compact Mobile-Friendly Marker Teleport Panel Loaded with Draggable Reopen Icon")
