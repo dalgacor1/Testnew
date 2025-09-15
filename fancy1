@@ -1,0 +1,153 @@
+-- Services
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- UI Elements
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Name = "FancyControlPanel"
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BackgroundTransparency = 0.5
+mainFrame.BorderSizePixel = 0
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 16)
+uiCorner.Parent = mainFrame
+
+local uiGradient = Instance.new("UIGradient")
+uiGradient.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(50, 50, 50))
+uiGradient.Parent = mainFrame
+
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.fromRGB(255, 255, 255)
+uiStroke.Parent = mainFrame
+
+local slotButtons = {}
+local slotData = {
+    {name = "Slot 1", coords = Vector3.new(-4655, 258, -1925)},
+    {name = "Slot 2", coords = Vector3.new(-4322, 258, -2287)},
+    {name = "Slot 3", coords = Vector3.new(-4307, 257.9, -1926)},
+    {name = "Slot 4", coords = Vector3.new(-4660, 257.9, -2287)}
+}
+
+for i, data in ipairs(slotData) do
+    local button = Instance.new("TextButton")
+    button.Parent = mainFrame
+    button.Size = UDim2.new(0, 350, 0, 50)
+    button.Position = UDim2.new(0, 25, 0, (i - 1) * 60 + 25)
+    button.Text = data.name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.BorderSizePixel = 0
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 18
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 12)
+    buttonCorner.Parent = button
+
+    local buttonGradient = Instance.new("UIGradient")
+    buttonGradient.Color = ColorSequence.new(Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
+    buttonGradient.Parent = button
+
+    local buttonStroke = Instance.new("UIStroke")
+    buttonStroke.Thickness = 2
+    buttonStroke.Color = Color3.fromRGB(255, 255, 255)
+    buttonStroke.Parent = button
+
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
+    end)
+
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        -- Handle slot selection
+        print("Selected: " .. data.name)
+        -- Add teleportation logic here
+    end)
+
+    table.insert(slotButtons, button)
+end
+
+-- Loop Functionality
+local loopButton = Instance.new("TextButton")
+loopButton.Parent = mainFrame
+loopButton.Size = UDim2.new(0, 350, 0, 50)
+loopButton.Position = UDim2.new(0, 25, 0, 250)
+loopButton.Text = "Start Loop"
+loopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+loopButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+loopButton.BorderSizePixel = 0
+loopButton.Font = Enum.Font.GothamBold
+loopButton.TextSize = 18
+
+local loopButtonCorner = Instance.new("UICorner")
+loopButtonCorner.CornerRadius = UDim.new(0, 12)
+loopButtonCorner.Parent = loopButton
+
+local loopButtonGradient = Instance.new("UIGradient")
+loopButtonGradient.Color = ColorSequence.new(Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
+loopButtonGradient.Parent = loopButton
+
+local loopButtonStroke = Instance.new("UIStroke")
+loopButtonStroke.Thickness = 2
+loopButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+loopButtonStroke.Parent = loopButton
+
+local loopActive = false
+
+loopButton.MouseButton1Click:Connect(function()
+    loopActive = not loopActive
+    if loopActive then
+        loopButton.Text = "Stop Loop"
+        -- Add invisibility and looping logic here
+    else
+        loopButton.Text = "Start Loop"
+        -- Remove invisibility and stop looping
+    end
+end)
+
+-- Input Field for Coordinates
+local coordInput = Instance.new("TextBox")
+coordInput.Parent = mainFrame
+coordInput.Size = UDim2.new(0, 350, 0, 50)
+coordInput.Position = UDim2.new(0, 25, 0, 310)
+coordInput.Text = "Enter Coordinates"
+coordInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+coordInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+coordInput.BorderSizePixel = 0
+coordInput.Font = Enum.Font.GothamBold
+coordInput.TextSize = 18
+
+local coordInputCorner = Instance.new("UICorner")
+coordInputCorner.CornerRadius = UDim.new(0, 12)
+coordInputCorner.Parent = coordInput
+
+local coordInputGradient = Instance.new("UIGradient")
+coordInputGradient.Color = ColorSequence.new(Color3.fromRGB(100, 100, 100), Color3.fromRGB(150, 150, 150))
+coordInputGradient.Parent = coordInput
+
+local coordInputStroke = Instance.new("UIStroke")
+coordInputStroke.Thickness = 2
+coordInputStroke.Color = Color3.fromRGB(255, 255, 255)
+coordInputStroke.Parent = coordInput
+
+coordInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local coords = coordInput.Text
+        print("Entered Coordinates: " .. coords)
+        -- Add logic to handle the entered coordinates
+    end
+end)
